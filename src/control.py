@@ -1,24 +1,35 @@
 from src.connect import Connection
+from src.manager import Manager
 
 class Controler():
     def __init__(self):
         self.clist = []
+        self.manager:Manager = None
 
     def __iter__(self):
-        self.idx = 0
         return self.clist
 
     def __next__(self):
-        if idx < len(self.clist):
-            _ = self.clist[self.idx]
-            self.idx += 1
-            return _
-        else:
-            raise StopIteration
+        next(self.clist)
 
     def append(self, conn:Connection):
         self.clist.append(conn)
+        conn.control = self
 
     def close(self):
         for conn in self.clist:
             conn.close()
+
+    def send(self, stream):
+        """
+        send stream to every connections
+        """
+        for conn in self.clist:
+            conn.send(stream)
+
+    def notice(self, stream):
+        """
+        connections notice control class when recv stream
+        """
+        self.manager.recv_control(stream)
+

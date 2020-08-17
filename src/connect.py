@@ -1,29 +1,37 @@
 import socket
 import threading
+import select
+from src.log import logger
 
 class Connection():
 
     def __init__(self):
-        pass
+        self.control = None
+        self._thread_stop = False
+
+    def thread_stop(self):
+        self._thread_stop = True
 
     def init_tcp(self):
         raise NotImplementedError
 
-    def recv_tcp(self):
+    def recv(self):
         """
         recv data from tcp, then give to manager
         """
         raise NotImplementedError
 
-    def send_tcp(self):
+    def send(self):
         """
         recv from manager, then send to tcp
         """
         raise NotImplementedError
 
     def thread_run(self):
-        th = threading.Thread(target=self.run)
+        self._thread_stop = False
+        th = threading.Thread(target=self.run, name='Connection run')
         th.start()
+        logger.info('thread start -> Connection.run()')
 
     def run(self):
         raise NotImplementedError
@@ -38,6 +46,16 @@ class ConnectTelnet(Connection):
 
     def __init__(self, socket):
         self._socket = socket
+        logger.info('establish a new telnet session')
+
+    def clean_text(self, text):
+        if text[0] == 255:
+            return ""
+
+        if text[0] == 13:
+            return b'\r'
+
+        return text
 
     def init_tcp(self):
         """
@@ -52,20 +70,33 @@ class ConnectTelnet(Connection):
         # don't want linemode
         self._socket.send(bytes.fromhex('fffb22'))
 
-        self.send_tcp(
+        self.send(
             "************************************************\r\n")
-        self.send_tcp("NetSerial by Elin\r\n")
-        self.send_tcp(
+        self.send("NetSerial by Elin\r\n")
+        self.send(
             "************************************************\r\n")
 
-        self.send_tcp("\r\n")
-        self.send_tcp("You are now connected to console.\r\n")
+        self.send("\r\n")
+        self.send("You are now connected to console.\r\n")
 
-    def send_tcp(self, data):
+        logger.info('telnet initialize completed')
+
+    def send(self, data):
         self._socket.send(data.encode())
+        logger.debug('connect send: %s' % data)
 
-    def recv_tcp(self):
-        return self._socket.recv(1024)
+    def recv(self):
+        stream = self._socket.recv(1024)
+        logger.debug('ConnectionTelnet.recv -> %s' % stream)
+        self.control.notice(self.clean_text(stream))
+
+    def run(self):
+        while not self._thread_stop:
+            ready = [self._socket]
+            read = select.select(ready, ready, [], 2)[0]
+
+            if ready:
+                data = self.recv()
 
     def close(self):
         self._socket.close()

@@ -2,7 +2,7 @@ import socket
 import select
 import threading
 from src.log import logger
-from src.control import Controler
+from src.manager import Manager
 from src.connect import ConnectTelnet
 
 
@@ -12,7 +12,7 @@ class Telnet():
         self._listen_port = port
 
         self.listener: socket.socket = None
-        self.controler: Controler = None
+        self.manager:Manager = None
         self._thread_stop = False
 
         self.start_listening()
@@ -38,11 +38,17 @@ class Telnet():
                 if _ is self.listener:
                     _socket, address = self.listener.accept()
                     conn = ConnectTelnet(_socket)
-                    self.controler.append(conn)
+                    self.manager.add_connection(conn)
                     conn.init_tcp()
                     conn.thread_run()
 
         self.close()
+
+    def thread_run(self):
+        self._thread_stop = False
+        th = threading.Thread(target=self.run, name='telnet run')
+        th.start()
+        logger.info('thread start -> Telnet.run()')
 
     def thread_stop(self):
         self._thread_stop = True
