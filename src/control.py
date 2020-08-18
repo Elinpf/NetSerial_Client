@@ -20,6 +20,10 @@ class Controler():
         for conn in self.clist:
             conn.close()
 
+    def remove(self, conn:Connection):
+        self.clist.remove(conn)
+        del conn
+
     def send(self, stream):
         """
         send stream to every connections

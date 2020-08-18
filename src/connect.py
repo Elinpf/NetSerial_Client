@@ -72,7 +72,9 @@ class ConnectTelnet(Connection):
 
         self.send(
             "************************************************\r\n")
-        self.send("NetSerial by Elin\r\n")
+        self.send("        NetSerial by Elin\r\n")
+        self.send("View: https://github.com/Elinpf/NetSerial")
+        self.send("Press <Ctrl + Del> to terminal this session\r\n")
         self.send(
             "************************************************\r\n")
 
@@ -88,6 +90,10 @@ class ConnectTelnet(Connection):
     def recv(self):
         stream = self._socket.recv(1024)
         logger.debug('ConnectionTelnet.recv -> %s' % stream)
+
+        if stream == b'\x7f':
+            self.close()
+            return
         self.control.notice(self.clean_text(stream))
 
     def run(self):
@@ -99,7 +105,9 @@ class ConnectTelnet(Connection):
                 data = self.recv()
 
     def close(self):
+        self.thread_stop()
         self._socket.close()
+        self.control.remove(self)
 
     def fileno(self):
         self._socket.fileno()

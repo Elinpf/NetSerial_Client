@@ -35,11 +35,6 @@ class SerialPort():
                 "No Serial Baudrate specified in the configuration, Set to 9600")
             conf.serial_baudrate = 9600
 
-        if not conf.serial_timeout:
-            logger.error(
-                "No Serial Timeout specified in the configuration, Set to 60s")
-            conf.serial_timeout = 60
-
         logger.info('serial port configraution check finished')
         return
 
@@ -56,10 +51,6 @@ class SerialPort():
 
     def read(self):
         while not self._thread_stop:
-
-            # bytes_to_read = self.port.inWaiting()
-            # c = self.port.read(bytes_to_read)
-            # c = self.port.read(1)
             c = self.port.read()
             _ = self.port.inWaiting()
             c += self.port.read(_)
