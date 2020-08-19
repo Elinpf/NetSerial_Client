@@ -73,7 +73,7 @@ class ConnectTelnet(Connection):
         self.send(
             "************************************************\r\n")
         self.send("        NetSerial by Elin\r\n")
-        self.send("View: https://github.com/Elinpf/NetSerial")
+        self.send("View: https://github.com/Elinpf/NetSerial\r\n")
         self.send("Press <Ctrl + Del> to terminal this session\r\n")
         self.send(
             "************************************************\r\n")
