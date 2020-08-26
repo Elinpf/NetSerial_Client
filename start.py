@@ -7,16 +7,21 @@ from src.manager import Manager
 # ptvsd.debug_this_thread()
 
 # set up controler
-control = Controler()
+# control = Controler()
 
 # set up serial port
-serial = SerialPort()
+# serial = SerialPort()
 
 # set up manager
-manager = Manager(control, serial)
-manager.thread_start()
+manager = Manager()
+# manager.serial = serial
+# manager.control = control
+# manager.thread_start()
 
 # set up telnet
-telnet = Telnet()
-telnet.manager = manager
-telnet.thread_run()
+# telnet = Telnet()
+# telnet.manager = manager
+# telnet.thread_run()
+
+manager.connect_server()
+manager.regist_room()

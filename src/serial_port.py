@@ -18,7 +18,7 @@ class SerialPort():
         self.connection()
 
     def check_conf(self):
-        if not conf.serial_device:
+        if not conf.SERIAL_DEVICE:
             logger.info(
                 'No Serial Port specified in the configuration, find Serial Ports...')
             plist = port_list.comports()
@@ -27,23 +27,23 @@ class SerialPort():
                 logger.error("can't found any serial port, Exit...")
                 exit()
 
-            conf.serial_device = plist[0].device
-            logger.info('Specifiy Serial Port > %s' % conf.serial_device)
+            conf.SERIAL_DEVICE = plist[0].device
+            logger.info('Specifiy Serial Port > %s' % conf.SERIAL_DEVICE)
 
-        if not conf.serial_baudrate:
+        if not conf.SERIAL_BAUDRATE:
             logger.error(
                 "No Serial Baudrate specified in the configuration, Set to 9600")
-            conf.serial_baudrate = 9600
+            conf.SERIAL_BAUDRATE = 9600
 
         logger.info('serial port configraution check finished')
         return
 
     def connection(self):
         try:
-            self.port = serial.Serial(conf.serial_device, baudrate=conf.serial_baudrate, timeout=None,
+            self.port = serial.Serial(conf.SERIAL_DEVICE, baudrate=conf.SERIAL_BAUDRATE, timeout=None,
                                       parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS, stopbits=serial.STOPBITS_ONE, xonxoff=False)
         except serial.serialutil.SerialException:
-            logger.error("can't open serial %s, Exit..." % conf.serial_device)
+            logger.error("can't open serial %s, Exit..." % conf.SERIAL_DEVICE)
             exit()
 
         self.port.flushInput()

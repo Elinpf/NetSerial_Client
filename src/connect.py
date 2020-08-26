@@ -3,6 +3,7 @@ import threading
 import select
 from src.log import logger
 
+
 class Connection():
 
     def __init__(self):
@@ -42,13 +43,17 @@ class Connection():
     def fileno(self):
         raise NotImplementedError
 
-class ConnectTelnet(Connection):
+
+class ConnectionTelnet(Connection):
 
     def __init__(self, socket):
         self._socket = socket
         logger.info('establish a new telnet session')
 
     def clean_text(self, text):
+        """
+        ignore telnet negotiate code
+        """
         if text[0] == 255:
             return ""
 
@@ -74,7 +79,7 @@ class ConnectTelnet(Connection):
             "************************************************\r\n")
         self.send("        NetSerial by Elin\r\n")
         self.send("View: https://github.com/Elinpf/NetSerial\r\n")
-        self.send("Press <Ctrl + Del> to terminal this session\r\n")
+        self.send("Press <Ctrl-c> to terminal this session\r\n")
         self.send(
             "************************************************\r\n")
 
@@ -91,7 +96,7 @@ class ConnectTelnet(Connection):
         stream = self._socket.recv(1024)
         logger.debug('ConnectionTelnet.recv -> %s' % stream)
 
-        if stream == b'\x7f':
+        if stream == b'\x03':
             self.close()
             return
         self.control.notice(self.clean_text(stream))
@@ -111,3 +116,36 @@ class ConnectTelnet(Connection):
 
     def fileno(self):
         self._socket.fileno()
+
+
+class ConnectionRoom(Connection):
+
+    def __init__(self, channel):
+        self.channel = channel
+        super().__init__()
+
+    def close(self):
+        self.thread_stop()
+
+    def fileno(self):
+        self.channel.fileno()
+
+    def init_tcp(self):
+        pass
+
+    def recv(self):
+        select.select([self.channel], [], [], 10)
+
+        if self.channel.recv_ready():
+            res = self.channel.recv(10)
+            return res
+
+        return b''
+
+    def run(self):
+        while not self._thread_stop:
+            stream = self.recv()
+            self.control.notice(stream)
+
+    def send(self, msg):
+        self.channel.send(msg)

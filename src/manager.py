@@ -1,12 +1,28 @@
+from src.ssh import SSHClient
+from src.connect import ConnectionRoom
+from src.room import Room
+from config import conf
+from src.log import logger
+
+
 class Manager():
 
-    def __init__(self, control, serial):
-        self._control = control
+    def __init__(self):
+        self._control = None
+        self._serial = None
+        self._room = None
+
+
+    def control(self, ctrl):
+        self._control = ctrl
+        self._register(self._control)
+
+    def serial(self, ser):
         self._serial = serial
+        self._register(self._serial)
 
-        self.register(serial)
-        self.register(control)
-
+    control = property(None, control)
+    serial  = property(None, serial)
 
     def recv_serial(self, stream):
         """
@@ -32,7 +48,7 @@ class Manager():
         """
         self._control.send(stream)
 
-    def register(self, klass):
+    def _register(self, klass):
         """
         need register SerialPort and Control in Manager
         """
@@ -43,7 +59,35 @@ class Manager():
         append a connection in Controlor
         """
         self._control.append(conn)
-    
+
     def thread_start(self):
         self._serial.thread_run()
 
+    def check_server_connection(self):
+        """
+        check with server connection
+        """
+        pass
+
+    def connect_server(self):
+        self.ssh_client = SSHClient()
+        self.ssh_client.connect_server(
+            conf.SSH_SERVER_IP_ADDRESS, conf.SSH_SERVER_PORT, conf.SSH_SERVER_USERNAME, conf.SSH_SERVER_PASSWORD)
+        logger.info('Connect to SSH Server')
+        logger.debug('SSH Server IP Address -> %s' % conf.SSH_SERVER_IP_ADDRESS)
+        logger.debug('SSH Server Port -> %s' % conf.SSH_SERVER_PORT)
+        logger.debug('SSH Connect Username -> %s' % conf.SSH_SERVER_USERNAME)
+
+    def regist_room(self):
+        """
+        regist to server, get a room id 
+        """
+        conn = ConnectionRoom(self.get_ssh_channel())
+        self._room = Room(conn)
+        self._room.regist()
+        if self._control:
+            self._control.append(conn)
+            logger.debug('Manager: Room append in control list')
+
+    def get_ssh_channel(self):
+        return self.ssh_client.channel
