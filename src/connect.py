@@ -148,4 +148,5 @@ class ConnectionRoom(Connection):
             self.control.notice(stream)
 
     def send(self, msg):
+        logger.debug('SSHConnection send steam -> %s' % msg)
         self.channel.send(msg)

@@ -28,20 +28,13 @@ class Telnet():
 
     def run(self):
         while not self._thread_stop:
-            ready = []
-
-            if self.listener:
-                ready.append(self.listener)
-
-            ready = select.select(ready, ready, [], 2)[0]
+            ready = select.select([self.listener], [], [], 2)[0]
 
             for _ in ready:  # establish new TCP session
                 if _ is self.listener:
                     _socket, address = self.listener.accept()
                     conn = ConnectionTelnet(_socket)
                     self.manager.add_connection(conn)
-                    conn.init_tcp()
-                    conn.thread_run()
 
         self.close()
 

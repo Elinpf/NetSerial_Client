@@ -17,7 +17,7 @@ class Manager():
         self._control = ctrl
         self._register(self._control)
 
-    def serial(self, ser):
+    def serial(self, serial):
         self._serial = serial
         self._register(self._serial)
 

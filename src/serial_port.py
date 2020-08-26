@@ -12,10 +12,7 @@ class SerialPort():
     def __init__(self):
         self.port: serial.Serial = None
         self._thread_stop = False
-        self.manager:Manger = None
-
-        self.check_conf()
-        self.connection()
+        self.manager: Manger = None
 
     def check_conf(self):
         if not conf.SERIAL_DEVICE:
@@ -24,8 +21,8 @@ class SerialPort():
             plist = port_list.comports()
 
             if not plist:
-                logger.error("can't found any serial port, Exit...")
-                exit()
+                logger.error("can't found any serial port, Please check Serial Port")
+                return
 
             conf.SERIAL_DEVICE = plist[0].device
             logger.info('Specifiy Serial Port > %s' % conf.SERIAL_DEVICE)
@@ -43,13 +40,21 @@ class SerialPort():
             self.port = serial.Serial(conf.SERIAL_DEVICE, baudrate=conf.SERIAL_BAUDRATE, timeout=None,
                                       parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS, stopbits=serial.STOPBITS_ONE, xonxoff=False)
         except serial.serialutil.SerialException:
-            logger.error("can't open serial %s, Exit..." % conf.SERIAL_DEVICE)
-            exit()
+            logger.error(
+                "can't open serial %s, Please check the COM is open and retry..." % conf.SERIAL_DEVICE)
+            return
 
         self.port.flushInput()
-        logger.info('serial port connection complete')
+        logger.info('serial port \'%s\' connection complete' % conf.SSH_SERVER_PORT)
+
+    def is_connected(self):
+        return bool(self.port)
 
     def read(self):
+        if not self.is_connected():
+            logger.info('Serial Port is not open, please connection')
+            return
+
         while not self._thread_stop:
             c = self.port.read()
             _ = self.port.inWaiting()
@@ -69,10 +74,10 @@ class SerialPort():
         for s in stream:
             self.write(s)
 
-    def write(self, c:int):
+    def write(self, c: int):
         c = chr(c).encode()
         self.port.write(c)
         logger.debug('serial port write -> %s' % c)
 
     def thread_stop(self):
-        self._thread_stop = True            
+        self._thread_stop = True
