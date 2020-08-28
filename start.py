@@ -1,5 +1,4 @@
 import ptvsd
-from src.telnet import Telnet
 from src.control import Controler
 from src.serial_port import SerialPort
 from src.manager import Manager
@@ -12,8 +11,7 @@ control = Controler()
 
 # set up serial port
 serial_port = SerialPort()
-serial_port.check_conf()
-serial_port.connection()
+serial_port.thread_connection()
 
 # set up manager
 gvar.manager = Manager()
@@ -22,9 +20,10 @@ gvar.manager.control = control
 gvar.manager.thread_start()
 
 # set up telnet
-telnet = Telnet()
-telnet.manager = gvar.manager
-telnet.thread_run()
+gvar.manager.listening_telnet()
 
 gvar.manager.connect_server()
-gvar.manager.regist_room()
+if gvar.manager.is_connected_server():
+    gvar.manager.regist_room()
+
+gvar.manager.wait_keyboard_interrupt()

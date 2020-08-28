@@ -5,6 +5,7 @@ import threading
 from src.log import logger
 from config import conf
 from src.manager import Manager
+from src.variable import gvar
 
 
 class SerialPort():
@@ -21,7 +22,8 @@ class SerialPort():
             plist = port_list.comports()
 
             if not plist:
-                logger.error("can't found any serial port, Please check Serial Port")
+                logger.error(
+                    "can't found any serial port, Please check Serial Port")
                 return
 
             conf.SERIAL_DEVICE = plist[0].device
@@ -45,7 +47,8 @@ class SerialPort():
             return
 
         self.port.flushInput()
-        logger.info('serial port \'%s\' connection complete' % conf.SSH_SERVER_PORT)
+        logger.info('serial port \'%s\' connection complete' %
+                    conf.SERIAL_DEVICE)
 
     def is_connected(self):
         return bool(self.port)
@@ -62,13 +65,23 @@ class SerialPort():
 
             stream = c.decode()
             self.manager.recv_serial(stream)
-            logger.debug('serial port read stream -> %s' % stream)
 
     def thread_run(self):
         self._thread_stop = False
         th = threading.Thread(target=self.read, name='serial read')
         th.start()
+        gvar.thread.append(th)
         logger.info('thread start -> SerialPort.read()')
+
+    def check_and_connection(self):
+        self.check_conf()
+        self.connection()
+
+    def thread_connection(self):
+        th = threading.Thread(
+            target=self.check_and_connection, name='serial connection')
+        th.start()
+        gvar.thread.append(th)
 
     def write_stream(self, stream):
         for s in stream:
@@ -77,7 +90,11 @@ class SerialPort():
     def write(self, c: int):
         c = chr(c).encode()
         self.port.write(c)
-        logger.debug('serial port write -> %s' % c)
 
     def thread_stop(self):
         self._thread_stop = True
+
+    def close(self):
+        self.thread_stop()
+        if self.is_connected():
+            self.port.close()

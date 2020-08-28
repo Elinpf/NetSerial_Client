@@ -2,6 +2,7 @@ import socket
 import threading
 import select
 from src.log import logger
+from src.variable import gvar
 
 
 class Connection():
@@ -32,6 +33,8 @@ class Connection():
         self._thread_stop = False
         th = threading.Thread(target=self.run, name='Connection run')
         th.start()
+        gvar.thread.append(th)
+
         logger.info('thread start -> Connection.run()')
 
     def run(self):
@@ -54,10 +57,13 @@ class ConnectionTelnet(Connection):
         """
         ignore telnet negotiate code
         """
-        if text[0] == 255:
+        if not text:
             return ""
 
-        if text[0] == 13:
+        elif text[0] == 255:
+            return ""
+
+        elif text[0] == 13:
             return b'\r'
 
         return text
@@ -90,21 +96,20 @@ class ConnectionTelnet(Connection):
 
     def send(self, data):
         self._socket.send(data.encode())
-        logger.debug('connect send: %s' % data)
 
     def recv(self):
         stream = self._socket.recv(1024)
-        logger.debug('ConnectionTelnet.recv -> %s' % stream)
 
         if stream == b'\x03':
             self.close()
             return
+
         self.control.notice(self.clean_text(stream))
 
     def run(self):
         while not self._thread_stop:
             ready = [self._socket]
-            read = select.select(ready, ready, [], 2)[0]
+            read = select.select(ready, [], [], 2)[0]
 
             if ready:
                 data = self.recv()
@@ -122,10 +127,16 @@ class ConnectionRoom(Connection):
 
     def __init__(self, channel):
         self.channel = channel
+        logger.info('establish a new Room session')
         super().__init__()
 
     def close(self):
-        self.thread_stop()
+        if self.channel:
+            self.thread_stop()
+            self.channel.close()
+            self.control.remove(self)
+            self.channel = None
+        
 
     def fileno(self):
         self.channel.fileno()
@@ -137,7 +148,7 @@ class ConnectionRoom(Connection):
         select.select([self.channel], [], [], 10)
 
         if self.channel.recv_ready():
-            res = self.channel.recv(10)
+            res = self.channel.recv(50)
             return res
 
         return b''
@@ -148,5 +159,4 @@ class ConnectionRoom(Connection):
             self.control.notice(stream)
 
     def send(self, msg):
-        logger.debug('SSHConnection send steam -> %s' % msg)
         self.channel.send(msg)

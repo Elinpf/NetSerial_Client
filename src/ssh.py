@@ -7,6 +7,9 @@ class SSHClient():
         self.transport:paramiko.Transport = None
         self.channel  :paramiko.Channel   = None
 
+    def __bool__(self):
+        return bool(self.channel)
+
     def connect_server(self, ip, port, username, password):
         self.transport = paramiko.Transport((ip, port))
         self.transport.connect(username=username, password=password)
@@ -23,7 +26,7 @@ class SSHClient():
         select.select([self.channel], [], [], 2)
 
         if self.channel.recv_ready():
-            return self.channel.recv()
+            return self.channel.recv(50)
 
         return ""
 

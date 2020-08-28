@@ -21,5 +21,10 @@ class Room():
 
     def send(self, msg):
         self.conn.send(msg)
+
+    def close(self):
+        if self.conn:
+            self.conn.close()
+            self.conn = None
         
         

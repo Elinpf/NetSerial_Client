@@ -1,8 +1,12 @@
+import telnetlib
+from paramiko.ssh_exception import SSHException
 from src.ssh import SSHClient
 from src.connect import ConnectionRoom
 from src.room import Room
 from config import conf
 from src.log import logger
+from src.variable import gvar
+from src.telnet import Telnet
 
 
 class Manager():
@@ -11,7 +15,8 @@ class Manager():
         self._control = None
         self._serial = None
         self._room = None
-
+        self._telnet:Telnet = None
+        self.ssh_client = None
 
     def control(self, ctrl):
         self._control = ctrl
@@ -22,7 +27,7 @@ class Manager():
         self._register(self._serial)
 
     control = property(None, control)
-    serial  = property(None, serial)
+    serial = property(None, serial)
 
     def recv_serial(self, stream):
         """
@@ -67,16 +72,35 @@ class Manager():
         """
         check with server connection
         """
-        pass
+        try:
+            telnetlib.Telnet(host=conf.SSH_SERVER_IP_ADDRESS,
+                             port=conf.SSH_SERVER_PORT, timeout=1)
+            return True
+        except:
+            logger.info(
+                "can't connect ssh server, please check the internet setting.")
+            return False
 
     def connect_server(self):
+        if not self.check_server_connection():
+            return
+
         self.ssh_client = SSHClient()
-        self.ssh_client.connect_server(
-            conf.SSH_SERVER_IP_ADDRESS, conf.SSH_SERVER_PORT, conf.SSH_SERVER_USERNAME, conf.SSH_SERVER_PASSWORD)
-        logger.info('Connect to SSH Server')
-        logger.debug('SSH Server IP Address -> %s' % conf.SSH_SERVER_IP_ADDRESS)
-        logger.debug('SSH Server Port -> %s' % conf.SSH_SERVER_PORT)
-        logger.debug('SSH Connect Username -> %s' % conf.SSH_SERVER_USERNAME)
+        try:
+            self.ssh_client.connect_server(
+                conf.SSH_SERVER_IP_ADDRESS, conf.SSH_SERVER_PORT, conf.SSH_SERVER_USERNAME, conf.SSH_SERVER_PASSWORD)
+            logger.info('Connect to SSH Server')
+            logger.debug('SSH Server IP Address -> %s' %
+                         conf.SSH_SERVER_IP_ADDRESS)
+            logger.debug('SSH Server Port -> %s' % conf.SSH_SERVER_PORT)
+            logger.debug('SSH Connect Username -> %s' %
+                         conf.SSH_SERVER_USERNAME)
+        except SSHException:
+            logger.error(
+                "can't connect netserial server, please contact the administrator.")
+
+        except Exception:
+            logger.exception("something wrong with the netserial server.")
 
     def regist_room(self):
         """
@@ -91,3 +115,32 @@ class Manager():
 
     def get_ssh_channel(self):
         return self.ssh_client.channel
+
+    def is_connected_server(self):
+        return bool(self.ssh_client)
+
+    def close_room(self):
+        self._room.close()
+
+    def listening_telnet(self):
+        self._telnet = Telnet()
+        self._telnet.manager = self
+        self._telnet.thread_run()
+
+    def wait_keyboard_interrupt(self):
+        import time
+        try:
+            if gvar.thread.has_alive_thread():
+                gvar.thread.clean_stoped_thread()
+                time.sleep(100)
+        except KeyboardInterrupt:
+            logger.info("shutdown the program...")
+            while gvar.thread.has_alive_thread():
+                self.shutdown()
+
+            logger.info("Bye!")
+
+    def shutdown(self):
+        for mod in [self._control, self._serial, self._telnet, self._room]:
+            if mod:
+                mod.close()
