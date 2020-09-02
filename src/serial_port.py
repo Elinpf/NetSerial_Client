@@ -44,7 +44,7 @@ class SerialPort():
         except serial.serialutil.SerialException:
             logger.error(
                 "can't open serial %s, Please check the COM is open and retry..." % conf.SERIAL_DEVICE)
-            return
+            raise(serial.SerialException)
 
         self.port.flushInput()
         logger.info('serial port \'%s\' connection complete' %
@@ -55,13 +55,19 @@ class SerialPort():
 
     def read(self):
         if not self.is_connected():
-            logger.info('Serial Port is not open, please connection')
-            return
+            try:
+                self.check_and_connection()
+            except serial.SerialException:  # when can't open serial, then return
+                return
 
         while not self._thread_stop:
-            c = self.port.read()
-            _ = self.port.inWaiting()
-            c += self.port.read(_)
+            try:
+                c = self.port.read()
+                _ = self.port.inWaiting()
+                c += self.port.read(_)
+            except serial.SerialException: # when close the serial port, maybe into this
+                logger.debug('serial port was closed')
+                return
 
             stream = c.decode()
             self.manager.recv_serial(stream)

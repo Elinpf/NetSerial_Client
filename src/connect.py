@@ -3,6 +3,7 @@ import threading
 import select
 from src.log import logger
 from src.variable import gvar
+import time
 
 
 class Connection():
@@ -98,21 +99,36 @@ class ConnectionTelnet(Connection):
         self._socket.send(data.encode())
 
     def recv(self):
-        stream = self._socket.recv(1024)
+        """
+        recv from the telnet client. if host not connected to serial port,
+        then try to open serial port frist.
+        """
+        try:
+            stream = self._socket.recv(1024)
+        except OSError:
+            logger.debug('telnet connect socket was closed.')
+            return
 
         if stream == b'\x03':
             self.close()
             return
 
+        # if serial port is not open, retry connection.
+        if b'\r' in stream and not gvar.manager.seial_port_is_connected():
+            gvar.manager.read_serial_port()
+            time.sleep(2)  # time to sleep if retry connection.
+            return
+
+        stream = self.clean_text(stream)
         self.control.notice(self.clean_text(stream))
+        return stream
 
     def run(self):
         while not self._thread_stop:
-            ready = [self._socket]
-            read = select.select(ready, [], [], 2)[0]
+            ready = select.select([self._socket], [], [], 10)[0]
 
-            if ready:
-                data = self.recv()
+            if ready and not self._socket._closed:
+                self.recv()
 
     def close(self):
         self.thread_stop()
@@ -136,7 +152,6 @@ class ConnectionRoom(Connection):
             self.channel.close()
             self.control.remove(self)
             self.channel = None
-        
 
     def fileno(self):
         self.channel.fileno()

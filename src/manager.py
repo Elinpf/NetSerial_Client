@@ -68,6 +68,14 @@ class Manager():
     def thread_start(self):
         self._serial.thread_run()
 
+    def seial_port_is_connected(self):
+        return self._serial.is_connected()
+
+    def read_serial_port(self):
+        self._serial.thread_run()
+
+    # =====================
+
     def check_server_connection(self):
         """
         check with server connection
@@ -122,6 +130,8 @@ class Manager():
     def close_room(self):
         self._room.close()
 
+    # =====================
+
     def listening_telnet(self):
         self._telnet = Telnet()
         self._telnet.manager = self
@@ -137,10 +147,14 @@ class Manager():
             logger.info("shutdown the program...")
             while gvar.thread.has_alive_thread():
                 self.shutdown()
+                time.sleep(0.5)
 
             logger.info("Bye!")
 
     def shutdown(self):
+        """
+        Guarantee no threading.
+        """
         for mod in [self._control, self._serial, self._telnet, self._room]:
             if mod:
                 mod.close()

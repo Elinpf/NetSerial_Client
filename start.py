@@ -11,7 +11,7 @@ control = Controler()
 
 # set up serial port
 serial_port = SerialPort()
-serial_port.thread_connection()
+# serial_port.thread_connection()
 
 # set up manager
 gvar.manager = Manager()
