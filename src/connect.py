@@ -3,6 +3,7 @@ import threading
 import select
 from src.log import logger
 from src.variable import gvar
+from config import conf
 import time
 
 
@@ -85,7 +86,14 @@ class ConnectionTelnet(Connection):
         self.send(
             "************************************************\r\n")
         self.send("        NetSerial by Elin\r\n")
-        self.send("View: https://github.com/Elinpf/NetSerial\r\n")
+        self.send("View: https://github.com/Elinpf/NetSerial_Client\r\n")
+
+        self.send("\r\n")
+
+        if gvar.manager.is_connected_server():
+            self.send("+ Server IP: %s Port: %s" % (conf.SSH_SERVER_IP_ADDRESS, conf.SSH_SERVER_PORT))
+            self.send("+ The Room id is: %s" % gvar.manager.get_room_id())
+
         self.send("Press <Ctrl-c> to terminal this session\r\n")
         self.send(
             "************************************************\r\n")

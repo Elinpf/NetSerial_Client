@@ -124,6 +124,9 @@ class Manager():
     def get_ssh_channel(self):
         return self.ssh_client.channel
 
+    def get_room_id(self):
+        return self._room.room_id()
+
     def is_connected_server(self):
         return bool(self.ssh_client)
 
