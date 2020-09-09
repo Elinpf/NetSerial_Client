@@ -1,11 +1,12 @@
 import paramiko
 import select
 
+
 class SSHClient():
 
     def __init__(self):
-        self.transport:paramiko.Transport = None
-        self.channel  :paramiko.Channel   = None
+        self.transport: paramiko.Transport = None
+        self.channel: paramiko.Channel = None
 
     def __bool__(self):
         return bool(self.channel)
@@ -29,4 +30,3 @@ class SSHClient():
             return self.channel.recv(50)
 
         return ""
-
