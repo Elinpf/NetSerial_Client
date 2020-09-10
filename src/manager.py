@@ -76,13 +76,15 @@ class Manager():
 
     # =====================
 
-    def check_server_connection(self):
+    def check_server_port_is_open(self):
         """
-        check with server connection
+        check with server connection and port is open
+        but there have some problem, server point will print SSH Error on logbuf
         """
         try:
-            telnetlib.Telnet(host=conf.SSH_SERVER_IP_ADDRESS,
+            tel = telnetlib.Telnet(host=conf.SSH_SERVER_IP_ADDRESS,
                              port=conf.SSH_SERVER_PORT, timeout=1)
+            tel.close()
             return True
         except:
             logger.info(
@@ -90,9 +92,6 @@ class Manager():
             return False
 
     def connect_server(self):
-        if not self.check_server_connection():
-            return
-
         self.ssh_client = SSHClient()
         try:
             self.ssh_client.connect_server(
