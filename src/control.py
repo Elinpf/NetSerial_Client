@@ -15,6 +15,8 @@ class Controler():
     def append(self, conn:Connection):
         self.clist.append(conn)
         conn.control = self
+        conn.init_tcp()
+        conn.thread_run()
 
     def close(self):
         for conn in self.clist:

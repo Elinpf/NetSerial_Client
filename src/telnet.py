@@ -2,17 +2,18 @@ import socket
 import select
 import threading
 from src.log import logger
-from src.manager import Manager
-from src.connect import ConnectTelnet
+from src.connect import ConnectionTelnet
+from config import conf
+from src.variable import gvar
 
 
 class Telnet():
-    def __init__(self, port=23):
+    def __init__(self, port=conf.TELNET_PORT):
 
         self._listen_port = port
 
         self.listener: socket.socket = None
-        self.manager:Manager = None
+        self.manager = None
         self._thread_stop = False
 
         self.start_listening()
@@ -23,24 +24,23 @@ class Telnet():
         self.listener.bind(('', self._listen_port))
         self.listener.listen()
 
-        logger.debug('Telnet.Start_new_linsten OK...')
+        logger.debug('Telnet.Start_linsten OK...')
 
     def run(self):
         while not self._thread_stop:
-            ready = []
+            ready = select.select([self.listener], [], [], 2)[0]
 
-            if self.listener:
-                ready.append(self.listener)
-
-            ready = select.select(ready, ready, [], 2)[0]
+            if self.listener._closed:
+                self.thread_stop()
+                continue
 
             for _ in ready:  # establish new TCP session
-                if _ is self.listener:
+                try:
                     _socket, address = self.listener.accept()
-                    conn = ConnectTelnet(_socket)
+                    conn = ConnectionTelnet(_socket)
                     self.manager.add_connection(conn)
-                    conn.init_tcp()
-                    conn.thread_run()
+                except Exception as e:
+                    logger.exception('telnet listening catch a exception -> %s' % e)
 
         self.close()
 
@@ -48,6 +48,7 @@ class Telnet():
         self._thread_stop = False
         th = threading.Thread(target=self.run, name='telnet run')
         th.start()
+        gvar.thread.append(th)
         logger.info('thread start -> Telnet.run()')
 
     def thread_stop(self):
