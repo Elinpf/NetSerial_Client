@@ -83,23 +83,23 @@ class ConnectionTelnet(Connection):
         # don't want linemode
         self._socket.send(bytes.fromhex('fffb22'))
 
-        self.send(
-            "************************************************\r\n")
-        self.send("        NetSerial by Elin\r\n")
-        self.send("View: https://github.com/Elinpf/NetSerial_Client\r\n")
-
+        self.send("*"*60 + "\r\n")
+        self.send("                 NetSerial by Elin\r\n")
+        self.send("View Project: https://github.com/Elinpf/NetSerial_Client\r\n")
         self.send("\r\n")
 
         if gvar.manager.is_connected_server():
-            self.send("+ Server IP: %s Port: %s" % (conf.SSH_SERVER_IP_ADDRESS, conf.SSH_SERVER_PORT))
-            self.send("+ The Room id is: %s" % gvar.manager.get_room_id())
+            self.send("+ Server IP: %s \r\n" % conf.SSH_SERVER_IP_ADDRESS)
+            self.send("+ Remote client connetion Port: %s\r\n" % (conf.SSH_SERVER_PORT + 100))
+            self.send("+ The Room id is: %s \r\n" % gvar.manager.get_room_id())
+            self.send("\r\n")
 
         self.send("Press <Ctrl-c> to terminal this session\r\n")
-        self.send(
-            "************************************************\r\n")
+        self.send("*"*60 + "\r\n")
 
         self.send("\r\n")
         self.send("You are now connected to console.\r\n")
+        self.send("\r\n")
 
         logger.info('telnet initialize completed')
 
