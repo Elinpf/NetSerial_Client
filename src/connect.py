@@ -115,6 +115,7 @@ class ConnectionTelnet(Connection):
             stream = self._socket.recv(1024)
         except OSError:
             logger.debug('telnet connect socket was closed.')
+            self.close()
             return
 
         if stream == b'\x03':
