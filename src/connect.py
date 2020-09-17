@@ -126,6 +126,7 @@ class ConnectionTelnet(Connection):
         if b'\r' in stream and not gvar.manager.seial_port_is_connected():
             gvar.manager.read_serial_port()
             time.sleep(2)  # time to sleep if retry connection.
+            logger.debug("try to connection serial port")
             return
 
         stream = self.clean_text(stream)

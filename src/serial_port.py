@@ -39,7 +39,8 @@ class SerialPort():
 
     def connection(self):
         try:
-            self.port = serial.Serial(conf.SERIAL_DEVICE, baudrate=conf.SERIAL_BAUDRATE, timeout=None,
+            # params: timeout = None means forever
+            self.port = serial.Serial(conf.SERIAL_DEVICE, baudrate=conf.SERIAL_BAUDRATE, timeout=None, write_timeout=4,
                                       parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS, stopbits=serial.STOPBITS_ONE, xonxoff=False)
         except serial.serialutil.SerialException:
             logger.error(
@@ -51,6 +52,7 @@ class SerialPort():
                     conf.SERIAL_DEVICE)
 
     def is_connected(self):
+        # just check SerialPort is connected at first time.
         return bool(self.port)
 
     def read(self):
@@ -65,7 +67,7 @@ class SerialPort():
                 c = self.port.read()
                 _ = self.port.inWaiting()
                 c += self.port.read(_)
-            except serial.SerialException: # when close the serial port, maybe into this
+            except serial.SerialException:  # when close the serial port, maybe into this
                 logger.debug('serial port was closed')
                 return
 
@@ -95,7 +97,11 @@ class SerialPort():
 
     def write(self, c: int):
         c = chr(c).encode()
-        self.port.write(c)
+        try:
+            self.port.write(c)
+        except serial.serialutil.SerialTimeoutException:
+            logger.exception("Serial write timeout")
+            self.close()
 
     def thread_stop(self):
         self._thread_stop = True
