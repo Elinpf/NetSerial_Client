@@ -39,7 +39,7 @@ class SerialPort():
     def connection(self):
         try:
             # params: timeout = None means forever
-            self.port = serial.Serial(conf.SERIAL_DEVICE, baudrate=conf.SERIAL_BAUDRATE, timeout=2, write_timeout=2,
+            self.port = serial.Serial(conf.SERIAL_DEVICE, baudrate=conf.SERIAL_BAUDRATE, timeout=None, write_timeout=2,
                                       parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS, stopbits=serial.STOPBITS_ONE, xonxoff=False)
         except serial.serialutil.SerialException:
             logger.error(
