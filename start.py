@@ -1,4 +1,3 @@
-import ptvsd
 from src.control import Controler
 from src.serial_port import SerialPort
 from src.manager import Manager

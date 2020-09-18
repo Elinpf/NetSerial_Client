@@ -1,6 +1,5 @@
 import serial
 import serial.tools.list_ports as port_list
-import select
 import threading
 from src.log import logger
 from config import conf
@@ -13,7 +12,7 @@ class SerialPort():
     def __init__(self):
         self.port: serial.Serial = None
         self._thread_stop = False
-        self.manager: Manger = None
+        self.manager: Manager = None
 
     def check_conf(self):
         if not conf.SERIAL_DEVICE:
@@ -40,7 +39,7 @@ class SerialPort():
     def connection(self):
         try:
             # params: timeout = None means forever
-            self.port = serial.Serial(conf.SERIAL_DEVICE, baudrate=conf.SERIAL_BAUDRATE, timeout=None, write_timeout=4,
+            self.port = serial.Serial(conf.SERIAL_DEVICE, baudrate=conf.SERIAL_BAUDRATE, timeout=2, write_timeout=2,
                                       parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS, stopbits=serial.STOPBITS_ONE, xonxoff=False)
         except serial.serialutil.SerialException:
             logger.error(
@@ -52,8 +51,10 @@ class SerialPort():
                     conf.SERIAL_DEVICE)
 
     def is_connected(self):
-        # just check SerialPort is connected at first time.
-        return bool(self.port)
+        if self.port:
+            return self.port.isOpen()
+
+        return False
 
     def read(self):
         if not self.is_connected():
@@ -69,6 +70,7 @@ class SerialPort():
                 c += self.port.read(_)
             except serial.SerialException:  # when close the serial port, maybe into this
                 logger.debug('serial port was closed')
+                self.close()
                 return
 
             stream = c.decode()
@@ -99,8 +101,9 @@ class SerialPort():
         c = chr(c).encode()
         try:
             self.port.write(c)
-        except serial.serialutil.SerialTimeoutException:
-            logger.exception("Serial write timeout")
+        # except serial.serialutil.SerialTimeoutException:
+        except Exception:
+            logger.info("Serial write timeout")
             self.close()
 
     def thread_stop(self):
@@ -110,3 +113,5 @@ class SerialPort():
         self.thread_stop()
         if self.is_connected():
             self.port.close()
+
+        logger.info("close the serial port")
