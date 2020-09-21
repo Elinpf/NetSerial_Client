@@ -1,4 +1,10 @@
-class conf():
+import os
+import sys
+import json
+from src.log import logger
+
+
+class config():
 
     # set serial port, default None
     SERIAL_DEVICE = 'COM3'
@@ -20,3 +26,30 @@ class conf():
 
     # ssh connect password
     SSH_SERVER_PASSWORD = 'foo'
+
+    def _get_variables(self):
+        return [c for c in dir(self) if c[0] != '_']
+
+    def _upgrade(self, custom: str):
+        local_var = self._get_variables()
+
+        local_dir = os.path.split(os.path.realpath(sys.argv[0]))[0]
+        json_path = os.path.join(local_dir, custom)
+        if not os.path.exists(json_path):
+            return
+
+        with open(json_path) as f:
+            j_var = json.load(f)
+            logger.info('loading custom configuration....')
+
+        for (key, val) in j_var.items():
+            if not key in local_var:
+                continue
+
+            self.__dict__[key] = val
+
+        logger.info('loading done')
+        return self
+
+
+conf = config()

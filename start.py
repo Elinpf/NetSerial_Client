@@ -1,9 +1,10 @@
+from config import conf
 from src.control import Controler
 from src.serial_port import SerialPort
 from src.manager import Manager
 from src.variable import gvar
 
-# ptvsd.debug_this_thread()
+conf._upgrade('custom.json')
 
 # set up controler
 control = Controler()
