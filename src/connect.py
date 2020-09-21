@@ -1,10 +1,8 @@
-import socket
 import threading
 import select
 from src.log import logger
 from src.variable import gvar
 from config import conf
-import time
 
 
 class Connection():
@@ -90,7 +88,8 @@ class ConnectionTelnet(Connection):
 
         if gvar.manager.is_connected_server():
             self.send("+ Server IP: %s \r\n" % conf.SSH_SERVER_IP_ADDRESS)
-            self.send("+ Remote client connetion Port: %s\r\n" % (conf.SSH_SERVER_PORT + 100))
+            self.send("+ Remote client connetion Port: %s\r\n" %
+                      (conf.SSH_SERVER_PORT + 100))
             self.send("+ The Room id is: %s \r\n" % gvar.manager.get_room_id())
             self.send("\r\n")
 
@@ -124,13 +123,14 @@ class ConnectionTelnet(Connection):
 
         # if serial port is not open, retry connection.
         if b'\r' in stream and not gvar.manager.seial_port_is_connected():
+            logger.debug("try to connection serial port")
             gvar.manager.read_serial_port()
-            time.sleep(2)  # time to sleep if retry connection.
-            return
+            if not gvar.manager.seial_port_is_connected():
+                # time.sleep(2)  # time to sleep if retry connection.
+                return
 
-        stream = self.clean_text(stream)
         self.control.notice(self.clean_text(stream))
-        return stream
+        return stream  # ! don't need
 
     def run(self):
         while not self._thread_stop:
