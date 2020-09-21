@@ -2,7 +2,7 @@ import threading
 import select
 from src.log import logger
 from src.variable import gvar
-from config import conf
+from src.config import conf
 
 
 class Connection():

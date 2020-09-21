@@ -3,7 +3,7 @@ import select
 import threading
 from src.log import logger
 from src.connect import ConnectionTelnet
-from config import conf
+from src.config import conf
 from src.variable import gvar
 
 
@@ -40,7 +40,8 @@ class Telnet():
                     conn = ConnectionTelnet(_socket)
                     self.manager.add_connection(conn)
                 except Exception as e:
-                    logger.exception('telnet listening catch a exception -> %s' % e)
+                    logger.exception(
+                        'telnet listening catch a exception -> %s' % e)
 
         self.close()
 

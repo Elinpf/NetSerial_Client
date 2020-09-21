@@ -3,7 +3,7 @@ from paramiko.ssh_exception import SSHException
 from src.ssh import SSHClient
 from src.connect import ConnectionRoom
 from src.room import Room
-from config import conf
+from src.config import conf
 from src.log import logger
 from src.variable import gvar
 from src.telnet import Telnet
@@ -15,7 +15,7 @@ class Manager():
         self._control = None
         self._serial = None
         self._room = None
-        self._telnet:Telnet = None
+        self._telnet: Telnet = None
         self.ssh_client = None
 
     def control(self, ctrl):
@@ -83,7 +83,7 @@ class Manager():
         """
         try:
             tel = telnetlib.Telnet(host=conf.SSH_SERVER_IP_ADDRESS,
-                             port=conf.SSH_SERVER_PORT, timeout=1)
+                                   port=conf.SSH_SERVER_PORT, timeout=1)
             tel.close()
             return True
         except:

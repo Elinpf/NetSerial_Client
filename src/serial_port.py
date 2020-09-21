@@ -2,7 +2,7 @@ import serial
 import serial.tools.list_ports as port_list
 import threading
 from src.log import logger
-from config import conf
+from src.config import conf
 from src.manager import Manager
 from src.variable import gvar
 
