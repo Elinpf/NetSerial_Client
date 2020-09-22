@@ -94,11 +94,12 @@ class ConnectionTelnet(Connection):
                 gvar.manager.regist_room()
             else:
                 self.send_line(" * can't connect")
+                self.send_line()
 
         if gvar.manager.is_connected_server():
             self.send_line("+ Server IP: %s " % conf.SSH_SERVER_IP_ADDRESS)
             self.send_line("+ Remote client connetion Port: %s" %
-                           (conf.SSH_SERVER_PORT + 100))
+                           (conf._SSH_SERVER_TERMINAL_PORT))
             self.send_line("+ The Room id is: %s " %
                            gvar.manager.get_room_id())
             self.send_line()

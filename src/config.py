@@ -27,6 +27,8 @@ class config():
     # ssh connect password
     SSH_SERVER_PASSWORD = 'foo'
 
+    _SSH_SERVER_TERMINAL_PORT = None
+
     def _get_variables(self):
         return [c for c in dir(self) if c[0] != '_']
 
