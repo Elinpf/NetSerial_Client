@@ -40,7 +40,7 @@ class Telnet():
                     conn = ConnectionTelnet(_socket)
                     self.manager.add_connection(conn)
                 except Exception as e:
-                    logger.exception(
+                    logger.error(
                         'telnet listening catch a exception -> %s' % e)
 
         self.close()

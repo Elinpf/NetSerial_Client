@@ -81,29 +81,42 @@ class ConnectionTelnet(Connection):
         # don't want linemode
         self._socket.send(bytes.fromhex('fffb22'))
 
-        self.send("*"*60 + "\r\n")
-        self.send("                 NetSerial by Elin\r\n")
-        self.send("View Project: https://github.com/Elinpf/NetSerial_Client\r\n")
-        self.send("\r\n")
+        self.send_line("*"*60)
+        self.send_line("                 NetSerial by Elin")
+        self.send_line(
+            "View Project: https://github.com/Elinpf/NetSerial_Client")
+        self.send_line("")
+
+        if not gvar.manager.is_connected_server():
+            self.send_line(" * Try to connect NetSerial Server: %s" %
+                           conf.SSH_SERVER_IP_ADDRESS)
+            if gvar.manager.connect_server():
+                gvar.manager.regist_room()
+            else:
+                self.send_line(" * can't connect")
 
         if gvar.manager.is_connected_server():
-            self.send("+ Server IP: %s \r\n" % conf.SSH_SERVER_IP_ADDRESS)
-            self.send("+ Remote client connetion Port: %s\r\n" %
-                      (conf.SSH_SERVER_PORT + 100))
-            self.send("+ The Room id is: %s \r\n" % gvar.manager.get_room_id())
-            self.send("\r\n")
+            self.send_line("+ Server IP: %s " % conf.SSH_SERVER_IP_ADDRESS)
+            self.send_line("+ Remote client connetion Port: %s" %
+                           (conf.SSH_SERVER_PORT + 100))
+            self.send_line("+ The Room id is: %s " %
+                           gvar.manager.get_room_id())
+            self.send_line()
 
-        self.send("Press <Ctrl-c> to terminal this session\r\n")
-        self.send("*"*60 + "\r\n")
+        self.send_line("Press <Ctrl-c> to terminal this session")
+        self.send_line("*"*60 + "")
 
-        self.send("\r\n")
-        self.send("You are now connected to console.\r\n")
-        self.send("\r\n")
+        self.send_line()
+        self.send_line("You are now connected to console.")
+        self.send_line()
 
         logger.info('telnet initialize completed')
 
     def send(self, data):
         self._socket.send(data.encode())
+
+    def send_line(self, msg=""):
+        self.send(msg + "\r\n")
 
     def recv(self):
         """
@@ -130,7 +143,7 @@ class ConnectionTelnet(Connection):
                 return
 
         self.control.notice(self.clean_text(stream))
-        return stream  # ! don't need
+        return stream
 
     def run(self):
         while not self._thread_stop:
@@ -161,6 +174,7 @@ class ConnectionRoom(Connection):
             self.channel.close()
             self.control.remove(self)
             self.channel = None
+            logger.info("room connection was closed")
 
     def fileno(self):
         self.channel.fileno()
@@ -183,4 +197,8 @@ class ConnectionRoom(Connection):
             self.control.notice(stream)
 
     def send(self, msg):
-        self.channel.send(msg)
+        try:
+            self.channel.send(msg)
+        except OSError:
+            logger.error("server connection was closed.")
+            gvar.manager.close_room()

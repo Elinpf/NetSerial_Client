@@ -102,6 +102,8 @@ class Manager():
             logger.debug('SSH Server Port -> %s' % conf.SSH_SERVER_PORT)
             logger.debug('SSH Connect Username -> %s' %
                          conf.SSH_SERVER_USERNAME)
+
+            return self.is_connected_server()
         except SSHException:
             logger.error(
                 "can't connect netserial server, please contact the administrator.")
@@ -127,9 +129,10 @@ class Manager():
         return self._room.room_id()
 
     def is_connected_server(self):
-        return bool(self.ssh_client)
+        return bool(self.ssh_client)  # ! something wrong
 
     def close_room(self):
+        self.ssh_client.close()
         self._room.close()
 
     # =====================
@@ -141,6 +144,8 @@ class Manager():
 
     def wait_keyboard_interrupt(self):
         import time
+
+        logger.debug("Into waiting for keyboard interrupt")
         try:
             if gvar.thread.has_alive_thread():
                 gvar.thread.clean_stoped_thread()

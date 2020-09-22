@@ -1,5 +1,5 @@
 from src.register import Register
-import select
+
 
 class Room():
     def __init__(self, conn):
@@ -26,5 +26,3 @@ class Room():
         if self.conn:
             self.conn.close()
             self.conn = None
-        
-        

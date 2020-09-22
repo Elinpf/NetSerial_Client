@@ -22,8 +22,7 @@ gvar.manager.thread_start()
 # set up telnet
 gvar.manager.listening_telnet()
 
-gvar.manager.connect_server()
-if gvar.manager.is_connected_server():
+if gvar.manager.connect_server():
     gvar.manager.regist_room()
 
 gvar.manager.wait_keyboard_interrupt()

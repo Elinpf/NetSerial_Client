@@ -9,7 +9,10 @@ class SSHClient():
         self.channel: paramiko.Channel = None
 
     def __bool__(self):
-        return bool(self.channel)
+        if self.channel:
+            return not self.channel.closed  # ? is_open()
+
+        return False
 
     def connect_server(self, ip, port, username, password):
         self.transport = paramiko.Transport((ip, port))
@@ -30,3 +33,6 @@ class SSHClient():
             return self.channel.recv(50)
 
         return ""
+
+    def close(self):
+        self.channel.close()
