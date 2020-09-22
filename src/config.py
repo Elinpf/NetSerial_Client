@@ -53,3 +53,4 @@ class config():
 
 
 conf = config()
+conf._upgrade('custom.json')

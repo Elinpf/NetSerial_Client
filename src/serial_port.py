@@ -114,4 +114,4 @@ class SerialPort():
         if self.is_connected():
             self.port.close()
 
-        logger.info("close the serial port")
+        logger.debug("close the serial port")

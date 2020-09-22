@@ -147,14 +147,14 @@ class Manager():
 
         logger.debug("Into waiting for keyboard interrupt")
         try:
-            if gvar.thread.has_alive_thread():
+            while gvar.thread.has_alive_thread():
                 gvar.thread.clean_stoped_thread()
-                time.sleep(100)
+                time.sleep(50)
         except KeyboardInterrupt:
             logger.info("shutdown the program...")
             while gvar.thread.has_alive_thread():
                 self.shutdown()
-                time.sleep(0.5)
+                time.sleep(0.2)
 
             logger.info("Bye!")
 
