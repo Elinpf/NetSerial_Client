@@ -3,6 +3,7 @@ import select
 from src.log import logger
 from src.variable import gvar
 from src.config import conf
+from src.banner import banner
 
 
 class Connection():
@@ -84,23 +85,25 @@ class ConnectionTelnet(Connection):
         self.send_line("*"*60)
         self.send_line("                 NetSerial by Elin")
         self.send_line(
-            "View Project: https://github.com/Elinpf/NetSerial_Client")
-        self.send_line("")
+            "View Project: %s" % banner.REPOSITORY_ADDRESS)
+        self.send_line("Version: %s" % banner.VERSION)
+        self.send_line()
 
         if not gvar.manager.is_connected_server():
             self.send_line(" * Try to connect NetSerial Server: %s" %
                            conf.SSH_SERVER_IP_ADDRESS)
             if gvar.manager.connect_server():
                 gvar.manager.regist_room()
+                self.send_line(" + Successfully connected")
             else:
-                self.send_line(" * can't connect")
+                self.send_line(" - Connection failed")
                 self.send_line()
 
         if gvar.manager.is_connected_server():
-            self.send_line("+ Server IP: %s " % conf.SSH_SERVER_IP_ADDRESS)
-            self.send_line("+ Remote client connetion Port: %s" %
+            self.send_line(" + Server IP: %s " % conf.SSH_SERVER_IP_ADDRESS)
+            self.send_line(" + Remote client connetion Port: %s" %
                            (conf._SSH_SERVER_TERMINAL_PORT))
-            self.send_line("+ The Room id is: %s " %
+            self.send_line(" + The Room id is: %s " %
                            gvar.manager.get_room_id())
             self.send_line()
 
