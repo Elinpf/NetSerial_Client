@@ -152,9 +152,9 @@ class Manager():
                 time.sleep(50)
         except KeyboardInterrupt:
             logger.info("shutdown the program...")
-            while gvar.thread.has_alive_thread():
+            if gvar.thread.has_alive_thread():
                 self.shutdown()
-                time.sleep(0.2)
+                gvar.thread.kill_all_thread()
 
             logger.info("Bye!")
 
