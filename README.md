@@ -11,6 +11,8 @@ NetSerial是一款可以通过TCP连接传输串口通讯的工具，支持`Wind
 # 安装方法
 ```
 git clone https://github.com/Elinpf/NetSerial_Client.git
+cd NetSerial_Client
+pip install -r requirements.txt
 ```
 
 # 使用方法
@@ -21,7 +23,3 @@ python ./start.py
 
 
 # TODO
-
-- 添加任务栏标签
-- 加入自动启动目录
-- 一体化启动
