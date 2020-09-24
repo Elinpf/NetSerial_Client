@@ -1,5 +1,5 @@
 class banner():
-    VERSION = "v0.3.0"
+    VERSION = "v0.4.1"
 
     REPOSITORY_ADDRESS = "https://github.com/Elinpf/NetSerial_Client"
 
