@@ -1,5 +1,4 @@
 import re
-import time
 
 import git
 import requests
@@ -7,8 +6,8 @@ import requests
 from src.banner import banner
 from src.config import conf
 from src.log import logger
-from src.variable import gvar
 from src.tools import wait_time
+from src.variable import gvar
 
 
 def calc_version(ver):
