@@ -1,3 +1,4 @@
+import sys
 import telnetlib
 from paramiko.ssh_exception import SSHException
 from src.ssh import SSHClient
@@ -7,6 +8,7 @@ from src.config import conf
 from src.log import logger
 from src.variable import gvar
 from src.telnet import Telnet
+from src.update import Update
 
 
 class Manager():
@@ -17,6 +19,7 @@ class Manager():
         self._room = None
         self._telnet: Telnet = None
         self.ssh_client = None
+        self._update = None
 
     def control(self, ctrl):
         self._control = ctrl
@@ -66,7 +69,12 @@ class Manager():
         self._control.append(conn)
 
     def thread_start(self):
+        # serial port
         self._serial.thread_run()
+
+        # update check
+        self._update = Update()
+        self._update.thread_run()
 
     def seial_port_is_connected(self):
         return self._serial.is_connected()
@@ -136,6 +144,10 @@ class Manager():
         self._room.close()
 
     # =====================
+    def git_pull(self):
+        return self._update.pull()
+
+    # =====================
 
     def listening_telnet(self):
         self._telnet = Telnet()
@@ -152,9 +164,8 @@ class Manager():
                 time.sleep(50)
         except KeyboardInterrupt:
             logger.info("shutdown the program...")
-            if gvar.thread.has_alive_thread():
-                self.shutdown()
-                gvar.thread.kill_all_thread()
+            self.shutdown()
+            gvar.thread.kill_all_thread()
 
             logger.info("Bye!")
 

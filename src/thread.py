@@ -5,6 +5,7 @@ import ctypes
 
 def _async_raise(th, exctype):
     tid = th.ident
+    tid = ctypes.c_long(tid)
     """raises the exception, performs cleanup if needed"""
     if not inspect.isclass(exctype):
         exctype = type(exctype)
@@ -43,8 +44,8 @@ class Thread():
         (self._tlist.remove(th)
          for th in self._tlist if not th.is_alive())  # ^_^
 
-    def function(self, func, name='', *args):
-        th = threading.Thread(target=func, args=args, name=name)
+    def function(self, target, name='', *args):
+        th = threading.Thread(target=target, args=args, name=name)
         th.start()
         self.append(th)
 
@@ -55,4 +56,4 @@ class Thread():
             except ValueError:
                 pass
 
-        self._tlist = []
+        # self._tlist = []

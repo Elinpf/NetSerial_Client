@@ -1,9 +1,10 @@
-import threading
 import select
+import threading
+
+from src.banner import banner
+from src.config import conf
 from src.log import logger
 from src.variable import gvar
-from src.config import conf
-from src.banner import banner
 
 
 class Connection():
@@ -59,10 +60,10 @@ class ConnectionTelnet(Connection):
         ignore telnet negotiate code
         """
         if not text:
-            return ""
+            return b''
 
         elif text[0] == 255:
-            return ""
+            return b''
 
         elif text[0] == 13:
             return b'\r'
@@ -81,6 +82,21 @@ class ConnectionTelnet(Connection):
 
         # don't want linemode
         self._socket.send(bytes.fromhex('fffb22'))
+
+        if conf._success_check_github:  # if github have new version
+            self.send(
+                "A new version is detected, do you want to update?(Y/n):")
+            while True:
+                c = bytes.decode(self.recv())
+                if not c:
+                    continue
+                elif (c == "Y" or c == "y"):
+                    self.send_line(c)  # echo answer
+                    self.send_line(gvar.manager.git_pull())
+                    break
+                elif (c == "n" or c == "N"):
+                    self.send_line(c)  # echo answer
+                    break
 
         self.send_line("*"*60)
         self.send_line("                 NetSerial by Elin")
@@ -124,8 +140,7 @@ class ConnectionTelnet(Connection):
 
     def recv(self):
         """
-        recv from the telnet client. if host not connected to serial port,
-        then try to open serial port frist.
+        recv from the telnet client.
         """
         try:
             stream = self._socket.recv(1024)
@@ -138,6 +153,13 @@ class ConnectionTelnet(Connection):
             self.close()
             return
 
+        return self.clean_text(stream)
+
+    def notice(self, stream=b''):
+        """
+        Notice to Serial port
+        if host not connected to serial port, then try to open serial port frist.
+        """
         # if serial port is not open, retry connection.
         if b'\r' in stream and not gvar.manager.seial_port_is_connected():
             logger.debug("try to connection serial port")
@@ -146,7 +168,7 @@ class ConnectionTelnet(Connection):
                 # time.sleep(2)  # time to sleep if retry connection.
                 return
 
-        self.control.notice(self.clean_text(stream))
+        self.control.notice(stream)
         return stream
 
     def run(self):
@@ -154,7 +176,9 @@ class ConnectionTelnet(Connection):
             ready = select.select([self._socket], [], [], 10)[0]
 
             if ready and not self._socket._closed:
-                self.recv()
+                c = self.recv()
+                if c:
+                    self.notice(c)
 
     def close(self):
         self.thread_stop()

@@ -29,14 +29,20 @@ class config():
 
     _SSH_SERVER_TERMINAL_PORT = None
 
+    def __init__(self):
+        # software running root dir
+        self._root_dir = os.path.split(os.path.realpath(sys.argv[0]))[0]
+
+        # github check success one time
+        self._success_check_github = False
+
     def _get_variables(self):
         return [c for c in dir(self) if c[0] != '_']
 
     def _upgrade(self, custom: str):
         local_var = self._get_variables()
 
-        local_dir = os.path.split(os.path.realpath(sys.argv[0]))[0]
-        json_path = os.path.join(local_dir, custom)
+        json_path = os.path.join(self._root_dir, custom)
         if not os.path.exists(json_path):
             return
 
