@@ -90,11 +90,11 @@ class ConnectionTelnet(Connection):
                 c = bytes.decode(self.recv())
                 if not c:
                     continue
-                elif (c == "Y" or c == "y"):
+                elif (c.lower() == 'y'):
                     self.send_line(c)  # echo answer
                     self.send_line(gvar.manager.git_pull())
                     break
-                elif (c == "n" or c == "N"):
+                elif (c.lower() == 'n'):
                     self.send_line(c)  # echo answer
                     break
 
@@ -105,6 +105,7 @@ class ConnectionTelnet(Connection):
         self.send_line("Version: %s" % banner.VERSION)
         self.send_line()
 
+        # check connect to server point
         if not gvar.manager.is_connected_server():
             self.send_line(" * Try to connect NetSerial Server: %s" %
                            conf.SSH_SERVER_IP_ADDRESS)
@@ -127,16 +128,31 @@ class ConnectionTelnet(Connection):
         self.send_line("*"*60 + "")
 
         self.send_line()
+
+        # # need threading block
+        # length = 0
+        # if not gvar.manager.serial_port_is_connected():
+        #     while not gvar.manager.try_to_connect_serial_port():
+        #         length = self.send("Not connected to console")
+        #         select.select([self._socket], [], [], 10)
+        #         self.recv()
+        #         self.clear_line(length)
+
         self.send_line("You are now connected to console.")
         self.send_line()
 
         logger.info('telnet initialize completed')
 
     def send(self, data):
-        self._socket.send(data.encode())
+        return self._socket.send(data.encode())
 
     def send_line(self, msg=""):
-        self.send(msg + "\r\n")
+        return self.send(msg + "\r\n")
+
+    def clear_line(self, length):
+        # self._socket.send(bytes.fromhex('fff8'))
+        self._socket.send(b'\x08'*length)
+        self._socket.send(b' '*length + b'\x08'*length)
 
     def recv(self):
         """
@@ -161,11 +177,8 @@ class ConnectionTelnet(Connection):
         if host not connected to serial port, then try to open serial port frist.
         """
         # if serial port is not open, retry connection.
-        if b'\r' in stream and not gvar.manager.seial_port_is_connected():
-            logger.debug("try to connection serial port")
-            gvar.manager.read_serial_port()
-            if not gvar.manager.seial_port_is_connected():
-                # time.sleep(2)  # time to sleep if retry connection.
+        if b'\r' in stream and not gvar.manager.serial_port_is_connected():
+            if not gvar.manager.try_to_connect_serial_port():
                 return
 
         self.control.notice(stream)
@@ -227,6 +240,7 @@ class ConnectionRoom(Connection):
     def send(self, msg):
         try:
             self.channel.send(msg)
+            return len(msg)
         except OSError:
             logger.error("server connection was closed.")
             gvar.manager.close_room()
