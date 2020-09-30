@@ -49,8 +49,8 @@ class Update():
         if not new_ver:
             return
 
-        logger.info("remote repository recent version is: %s" % new_ver)
-        logger.info("the running version is %s" % banner.VERSION)
+        logger.debug("remote repository recent version is: %s" % new_ver)
+        logger.debug("the running version is %s" % banner.VERSION)
 
         new_ver_int = calc_version(new_ver)
         run_ver_int = calc_version(banner.VERSION)
@@ -60,7 +60,7 @@ class Update():
         if (new_ver_int > run_ver_int):  # check if recent version is new
             return True
         else:
-            logger.info("don't need update")
+            logger.info("it's the latest version")
             return False
 
     def pull(self):

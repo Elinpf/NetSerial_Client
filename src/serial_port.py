@@ -103,7 +103,7 @@ class SerialPort():
             self.port.write(c)
         # except serial.serialutil.SerialTimeoutException:
         except Exception:
-            logger.info("Serial write timeout")
+            logger.debug("Serial write timeout")
             self.close()
 
     def thread_stop(self):

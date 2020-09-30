@@ -1,4 +1,6 @@
 import logging
+import os
+import sys
 
 
 logger = logging.getLogger()
@@ -8,8 +10,9 @@ fh_formatter = logging.Formatter(
 sh_formatter = logging.Formatter('[%(levelname)s] %(message)s')
 
 # to file
-fh = logging.FileHandler('console.log')
-fh.setLevel(logging.DEBUG)
+root_dir = os.path.split(os.path.realpath(sys.argv[0]))[0]
+fh = logging.FileHandler(os.path.join(root_dir, 'console.log'))
+fh.setLevel(logging.INFO)
 fh.setFormatter(fh_formatter)
 
 # to screen
