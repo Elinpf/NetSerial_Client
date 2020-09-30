@@ -82,8 +82,9 @@ class Manager():
         self._serial.thread_run()
 
     def try_to_connect_serial_port(self):
-        logger.debug("try to connection serial port")
-        gvar.manager.read_serial_port()
+        if not self.serial_port_is_connected():
+            logger.debug("try to connection serial port")
+            gvar.manager.read_serial_port()
         return self.serial_port_is_connected()
 
     # =====================

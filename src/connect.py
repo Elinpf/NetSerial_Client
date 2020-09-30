@@ -1,5 +1,6 @@
 import select
 import threading
+import time
 
 from src.banner import banner
 from src.config import conf
@@ -53,6 +54,7 @@ class ConnectionTelnet(Connection):
 
     def __init__(self, socket):
         self._socket = socket
+        self._block = True  # use to block send to serial
         logger.info('establish a new telnet session')
 
     def clean_text(self, text):
@@ -85,7 +87,7 @@ class ConnectionTelnet(Connection):
 
         if conf._success_check_github:  # if github have new version
             self.send(
-                "A new version is detected, do you want to update?(Y/n):")
+                "A new version is detected, do you want to update?(Y/n):", True)
             while True:
                 c = bytes.decode(self.recv())
                 if not c:
@@ -129,25 +131,33 @@ class ConnectionTelnet(Connection):
 
         self.send_line()
 
-        # # need threading block
-        # length = 0
-        # if not gvar.manager.serial_port_is_connected():
-        #     while not gvar.manager.try_to_connect_serial_port():
-        #         length = self.send("Not connected to console")
-        #         select.select([self._socket], [], [], 10)
-        #         self.recv()
-        #         self.clear_line(length)
+        # need threading block
+        length = 0
+        if not gvar.manager.serial_port_is_connected():
+            while not gvar.manager.try_to_connect_serial_port():
+                length = self.send(" [-] Not connected to console", True)
+                select.select([self._socket], [], [], None)
+                self.recv()
+                self.clear_line(length)
 
-        self.send_line("You are now connected to console.")
-        self.send_line()
+        length = self.send_line("You are now connected to console.")
 
+        self._block = False
         logger.info('telnet initialize completed')
 
-    def send(self, data):
+    def send(self, data, force=False):
+        """
+        when init status , block the send channel
+        force to send to terminal if want
+        """
+        if self._block:
+            if not force:
+                return 0
+
         return self._socket.send(data.encode())
 
     def send_line(self, msg=""):
-        return self.send(msg + "\r\n")
+        return self.send(msg + "\r\n", True)
 
     def clear_line(self, length):
         # self._socket.send(bytes.fromhex('fff8'))
@@ -180,6 +190,9 @@ class ConnectionTelnet(Connection):
         if b'\r' in stream and not gvar.manager.serial_port_is_connected():
             if not gvar.manager.try_to_connect_serial_port():
                 return
+
+        if self._block:
+            return
 
         self.control.notice(stream)
         return stream
