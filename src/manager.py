@@ -1,4 +1,3 @@
-import sys
 import telnetlib
 from paramiko.ssh_exception import SSHException
 from src.ssh import SSHClient
@@ -76,11 +75,17 @@ class Manager():
         self._update = Update()
         self._update.thread_run()
 
-    def seial_port_is_connected(self):
+    def serial_port_is_connected(self):
         return self._serial.is_connected()
 
     def read_serial_port(self):
         self._serial.thread_run()
+
+    def try_to_connect_serial_port(self):
+        if not self.serial_port_is_connected():
+            logger.debug("try to connection serial port")
+            gvar.manager.read_serial_port()
+        return self.serial_port_is_connected()
 
     # =====================
 
