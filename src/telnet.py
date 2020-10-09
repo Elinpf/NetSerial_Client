@@ -21,7 +21,7 @@ class Telnet():
     def start_listening(self):
         self.listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.listener.bind(('', self._listen_port))
+        self.listener.bind(('127.0.0.1', self._listen_port))
         self.listener.listen()
 
         logger.debug('Telnet.Start_linsten OK...')
