@@ -1,11 +1,11 @@
 import select
 import threading
-import time
 
 from src.banner import banner
 from src.config import conf
 from src.log import logger
 from src.variable import gvar
+from src.menu import Menu
 
 
 class Connection():
@@ -56,6 +56,7 @@ class ConnectionTelnet(Connection):
         self._socket = socket
         self._block = True  # use to block send to serial
         logger.info('establish a new telnet session')
+        self._menu = Menu(socket)
 
     def clean_text(self, text):
         """
@@ -87,7 +88,7 @@ class ConnectionTelnet(Connection):
 
         if conf._success_check_github:  # if github have new version
             self.send(
-                "A new version is detected, do you want to update?(Y/n):", True)
+                "A new version is detected, do you want to update?(Y/n):", force=True)
             while True:
                 c = bytes.decode(self.recv())
                 if not c:
@@ -126,7 +127,7 @@ class ConnectionTelnet(Connection):
                            gvar.manager.get_room_id())
             self.send_line()
 
-        self.send_line("Press <Ctrl-c> to terminal this session")
+        self.send_line("Press <Ctrl-m> to open Menu")
         self.send_line("*"*60 + "")
 
         self.send_line()
@@ -175,11 +176,22 @@ class ConnectionTelnet(Connection):
             self.close()
             return
 
-        if stream == b'\x03':
-            self.close()
+        logger.info("stream: %s" % stream)
+
+        # don't need ctrl-c
+        # if stream == b'\x03':
+        #     self.close()
+        #     return
+
+        # ctrl-m open menu
+        if stream == b'\r\x00':
+            self.oepn_menu()
             return
 
         return self.clean_text(stream)
+
+    def oepn_menu(self):
+        self._menu.open()
 
     def notice(self, stream=b''):
         """
