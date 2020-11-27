@@ -24,6 +24,9 @@ class config():
     # ssh connect username
     SSH_SERVER_USERNAME = 'bar'
 
+    # remote user can't modify by default
+    REMOTE_USER_MODIFY = False
+
     # ssh connect password
     SSH_SERVER_PASSWORD = 'foo'
 

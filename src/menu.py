@@ -1,11 +1,17 @@
 import select
 from typing import Counter
 from src.exceptions import SocketClosed
+from src.config import conf
 
 
-def just_see():
-    print('just see')
-    return 'just see see'
+def remote_user_just_read():
+    conf.REMOTE_USER_MODIFY = False
+    return "remote user can't modify"
+
+
+def remote_user_read_and_modify():
+    conf.REMOTE_USER_MODIFY = True
+    return "remote user can modify"
 
 
 def close_menu():
@@ -19,7 +25,11 @@ class Menu():
         root_menu = MenuItem("Root Menu")
 
         menu_control_user = root_menu.register_submenu("Control User")
-        menu_control_user.register_items('远程终端只能查看 (defualt)', just_see)
+
+        menu_control_user.register_items(
+            '远程终端只能查看', remote_user_just_read)
+        menu_control_user.register_items(
+            '远程终端可看可修改', remote_user_read_and_modify)
 
         self.current_menu = root_menu
 

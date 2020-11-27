@@ -181,7 +181,7 @@ class ConnectionTelnet(Connection):
             self.close()
             return
 
-        logger.info("stream: %s" % stream)
+        # logger.info("stream: %s" % stream)
 
         return self.clean_text(stream)
 
@@ -254,7 +254,8 @@ class ConnectionRoom(Connection):
     def run(self):
         while not self._thread_stop:
             stream = self.recv()
-            self.control.notice(stream)
+            if conf.REMOTE_USER_MODIFY:
+                self.control.notice(stream)
 
     def send(self, msg):
         try:
