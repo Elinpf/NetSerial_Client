@@ -1,9 +1,15 @@
 import select
+from typing import Counter
+from src.exceptions import SocketClosed
 
 
 def just_see():
     print('just see')
     return 'just see see'
+
+
+def close_menu():
+    pass
 
 
 class Menu():
@@ -17,74 +23,119 @@ class Menu():
 
         self.current_menu = root_menu
 
+    def open(self):
         self.show_current_menu()
-        self.watting_for_select()
+        self.waitting_for_select()
 
     def show_current_menu(self):
-        self.send(self.current_menu.name + "\n")
+        self.send_line()
+        self.send_line('-' * 40)
+        self.send_middle(self.current_menu.name, 40)
+        self.send_line('-' * 40)
 
-        _ = "\n".join(self.current_menu.show())
-        self.send(_)
-        self.send("\n")
-        self.send("\n")
+        self.send(self.current_menu.show())
+        self.send_line()
+        self.send_line()
         self.send("please input your select: ")
 
     def recv(self):
-        return self.socket.recv(1024)
+        return self.socket.recv()
 
     def send(self, msg):
+        if msg is None:
+            msg = ''
+
         return self.socket.send(msg)
 
-    def watting_for_select(self):
+    def send_line(self, msg=''):
+        return self.socket.send_line(msg)
+
+    def send_middle(self, msg, length):
+        return self.socket.send_middle(msg, length)
+
+    def waitting_for_select(self):
         while True:
-            ready = select.select([self._socket], [], [], 10)[0]
-            if ready and not self._socket._closed:
-                c = self.recv()
-                self.send(c + "\n")  # echo
+            try:
+                c = self.socket.waitting_recv()
+                self.send_line(c.decode())  # echo
                 _select = self.current_menu.select(c)
-                if _select is Item:
+                if isinstance(_select, Item):
                     msg = _select.func()
-                    self.send(msg + "\n")
+                    self.send_line(msg)
                     break
 
                 else:
                     self.current_menu = _select
                     self.show_current_menu()
+            except SocketClosed:
+                return  # ! WRONG
 
 
 class MenuItem():
 
-    def __init__(self, item_name: str):
+    def __init__(self, item_name: str, father_menu=None):
         self.name = item_name
-        self.menus_and_items = []
+        self.menus_and_items = {}
+        self.father_menu = father_menu
+        self.register_zero()
+        self.idx = 1
 
-    def register_submenu(self, menu_name):
+    def register_zero(self):
+        if not self.father_menu:
+            desc = 'close menu'
+            item = Item('close menu', close_menu)
+            self.menus_and_items[0] = {'desc': desc, 'klass': item}
+
+        else:
+            desc = 'back to %s' % self.father_menu.name
+            self.menus_and_items[0] = {'desc': desc, 'klass': self.father_menu}
+
+    def register_submenu(self, menu_name, desc=''):
         """
         item: MenuItem
         """
-        menu = MenuItem(menu_name)
-        self.menus_and_items.append(menu)
+        if not desc:
+            desc = menu_name
+
+        menu = MenuItem(menu_name, father_menu=self)
+        self.menus_and_items[self.idx] = {'desc': desc, 'klass': menu}
+        self.idx += 1
+
         return menu  # return new menu
 
-    def register_items(self, item_name, func):
-        self.menus_and_items.append(Item(item_name, func))
+    def register_items(self, item_name, func, desc=''):
+        if not desc:
+            desc = item_name
+
+        self.menus_and_items[self.idx] = {
+            'desc': desc, 'klass': Item(item_name, func)}
+        self.idx += 1
         return self
 
     def show(self):
         return_list = []
 
-        index = 0
-        for e in self.menus_and_items:
-            return_list.append("{index}: {message}".format(index, e.name))
+        for i, v in self.menus_and_items.items():
+            if i == 0:
+                continue
 
-        return return_list
+            return_list.append("%s: %s" % (str(i), v['desc']))
+
+        return_list.append("")
+        return_list.append("0: %s" % self.menus_and_items[0]['desc'])
+
+        return "\r\n".join(return_list)
 
     def select(self, idx):
-        idx = int(idx)
+        try:
+            idx = int(idx)
+        except:
+            return self
+
         if idx < 0 or idx > len(self.menus_and_items):
             return self
 
-        return self.menus_and_items[idx]
+        return self.menus_and_items[idx]['klass']
 
 
 class Item():

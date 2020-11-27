@@ -1,6 +1,7 @@
 import socket
 import select
 import threading
+import traceback
 from src.log import logger
 from src.connect import ConnectionTelnet
 from src.config import conf
@@ -42,6 +43,7 @@ class Telnet():
                 except Exception as e:
                     logger.error(
                         'telnet listening catch a exception -> %s' % e)
+                    traceback.print_exc()
 
         self.close()
 

@@ -1,4 +1,5 @@
 import select
+from src.exceptions import SocketClosed
 import threading
 
 from src.banner import banner
@@ -6,6 +7,7 @@ from src.config import conf
 from src.log import logger
 from src.variable import gvar
 from src.menu import Menu
+from src.socket import Socket
 
 
 class Connection():
@@ -53,10 +55,9 @@ class Connection():
 class ConnectionTelnet(Connection):
 
     def __init__(self, socket):
-        self._socket = socket
+        self._socket = Socket(socket)
         self._block = True  # use to block send to serial
         logger.info('establish a new telnet session')
-        self._menu = Menu(socket)
 
     def clean_text(self, text):
         """
@@ -78,13 +79,13 @@ class ConnectionTelnet(Connection):
         set up telnet
         """
         # IAC WILL ECHO
-        self._socket.send(bytes.fromhex('fffb01'))
+        self._socket.send_raw(bytes.fromhex('fffb01'))
 
         # IAC DONT ECHO 这个无法使用
         # self._socket.send(bytes.fromhex('fffe01'))
 
         # don't want linemode
-        self._socket.send(bytes.fromhex('fffb22'))
+        self._socket.send_raw(bytes.fromhex('fffb22'))
 
         if conf._success_check_github:  # if github have new version
             self.send(
@@ -127,7 +128,7 @@ class ConnectionTelnet(Connection):
                            gvar.manager.get_room_id())
             self.send_line()
 
-        self.send_line("Press <Ctrl-m> to open Menu")
+        self.send_line("Press <Ctrl-n> to open Menu")
         self.send_line("*"*60 + "")
 
         self.send_line()
@@ -155,49 +156,46 @@ class ConnectionTelnet(Connection):
             if not force:
                 return 0
 
-        return self._socket.send(data.encode())
+        return self._socket.send(data)
 
     def send_line(self, msg=""):
         return self.send(msg + "\r\n", True)
 
     def clear_line(self, length):
-        # self._socket.send(bytes.fromhex('fff8'))
-        self._socket.send(b'\x08'*length)
-        self._socket.send(b' '*length + b'\x08'*length)
+        self._socket.clear_line(length)
 
     def recv(self):
         """
         recv from the telnet client.
         """
         try:
-            stream = self._socket.recv(1024)
-        except OSError:
+            stream = self._socket.recv()
+
+            # ctrl-n open menu
+            if stream == b'\x0e':
+                self.oepn_menu()
+                return
+
+        except SocketClosed:
             logger.debug('telnet connect socket was closed.')
             self.close()
             return
 
         logger.info("stream: %s" % stream)
 
-        # don't need ctrl-c
-        # if stream == b'\x03':
-        #     self.close()
-        #     return
-
-        # ctrl-m open menu
-        if stream == b'\r\x00':
-            self.oepn_menu()
-            return
-
         return self.clean_text(stream)
 
     def oepn_menu(self):
-        self._menu.open()
+        Menu(self._socket).open()
 
     def notice(self, stream=b''):
         """
         Notice to Serial port
         if host not connected to serial port, then try to open serial port frist.
         """
+        if stream is None:
+            return
+
         # if serial port is not open, retry connection.
         if b'\r' in stream and not gvar.manager.serial_port_is_connected():
             if not gvar.manager.try_to_connect_serial_port():
@@ -211,12 +209,8 @@ class ConnectionTelnet(Connection):
 
     def run(self):
         while not self._thread_stop:
-            ready = select.select([self._socket], [], [], 10)[0]
-
-            if ready and not self._socket._closed:
-                c = self.recv()
-                if c:
-                    self.notice(c)
+            _ = self._socket.waitting_recv(self.recv)
+            self.notice(_)
 
     def close(self):
         self.thread_stop()
