@@ -1,6 +1,7 @@
 from typing import Counter
 from src.exceptions import SocketClosed
 from src.config import conf
+from src.variable import gvar
 
 
 def remote_user_just_read():
@@ -13,6 +14,11 @@ def remote_user_read_and_modify():
     return "remote user can modify"
 
 
+def get_room_id():
+    room_id = gvar.manager.get_room_id()
+    return ("the room id is: %s" % room_id)
+
+
 def close_menu():
     pass
 
@@ -23,20 +29,24 @@ class Menu():
         self.socket = client_socket
         root_menu = MenuItem("Root Menu")
 
-        menu_control_user = root_menu.register_submenu("Control User")
+        # User Control
+        menu_user_control = root_menu.register_submenu("User Control")
 
         if conf.REMOTE_USER_MODIFY:
             pand1 = ''
             pand2 = '*'
-
         else:
             pand1 = '*'
             pand2 = ''
 
-        menu_control_user.register_items(
+        menu_user_control.register_items(
             '远程终端只能查看  %s' % pand1, remote_user_just_read)
-        menu_control_user.register_items(
+        menu_user_control.register_items(
             '远程终端可看可修改  %s' % pand2, remote_user_read_and_modify)
+
+        #  Room Control
+        menu_room_control = root_menu.register_submenu("Room Control")
+        menu_room_control.register_items('查看 room id', get_room_id)
 
         self.current_menu = root_menu
 
