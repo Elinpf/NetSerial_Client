@@ -1,4 +1,3 @@
-import select
 from typing import Counter
 from src.exceptions import SocketClosed
 from src.config import conf
@@ -26,10 +25,18 @@ class Menu():
 
         menu_control_user = root_menu.register_submenu("Control User")
 
+        if conf.REMOTE_USER_MODIFY:
+            pand1 = ''
+            pand2 = '*'
+
+        else:
+            pand1 = '*'
+            pand2 = ''
+
         menu_control_user.register_items(
-            '远程终端只能查看', remote_user_just_read)
+            '远程终端只能查看  %s' % pand1, remote_user_just_read)
         menu_control_user.register_items(
-            '远程终端可看可修改', remote_user_read_and_modify)
+            '远程终端可看可修改  %s' % pand2, remote_user_read_and_modify)
 
         self.current_menu = root_menu
 
@@ -142,7 +149,7 @@ class MenuItem():
         except:
             return self
 
-        if idx < 0 or idx > len(self.menus_and_items):
+        if idx < 0 or idx >= len(self.menus_and_items):
             return self
 
         return self.menus_and_items[idx]['klass']
