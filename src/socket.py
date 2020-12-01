@@ -53,3 +53,6 @@ class Socket():
 
     def closed(self):
         return self._socket._closed
+
+    def close(self):
+        return self._socket.close()
