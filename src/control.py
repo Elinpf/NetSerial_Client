@@ -1,4 +1,4 @@
-from src.connect import Connection
+from src.connect import Connection, ConnectionRoom
 from src.manager import Manager
 
 
@@ -33,6 +33,14 @@ class Controler():
         """
         for conn in self.clist:
             conn.send(stream)
+
+    def remove_room(self):
+        """
+        remove ConnectionRoom only
+        """
+        for conn in self.clist:
+            if isinstance(conn, ConnectionRoom):
+                self.clist.remove(conn)
 
     def notice(self, stream):
         """

@@ -19,6 +19,17 @@ def get_room_id():
     return ("the room id is: %s" % room_id)
 
 
+def get_room_user_num():
+    pass
+
+
+def change_room_id():
+    gvar.manager.close_room()
+    gvar.manager.regist_room()
+    room_id = gvar.manager.get_room_id()
+    return ("re-open a new room, id is : %s" % room_id)
+
+
 def close_menu():
     pass
 
@@ -47,6 +58,8 @@ class Menu():
         #  Room Control
         menu_room_control = root_menu.register_submenu("Room Control")
         menu_room_control.register_items('查看 room id', get_room_id)
+        # menu_room_control.register_items('查看房间内用户数量', get_room_user_num)
+        menu_room_control.register_items('踢掉所有用户并更换room id', change_room_id)
 
         self.current_menu = root_menu
 

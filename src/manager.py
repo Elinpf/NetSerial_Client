@@ -128,7 +128,11 @@ class Manager():
         """
         regist to server, get a room id 
         """
+        if not self.is_connected_server():
+            self.connect_server()
+
         conn = ConnectionRoom(self.get_ssh_channel())
+
         self._room = Room(conn)
         self._room.regist()
         if self._control:
