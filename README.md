@@ -15,11 +15,23 @@ cd NetSerial_Client
 pip install -r requirements.txt
 ```
 
+# 配置
+
+打开`custom.json`文件，修改所需配置。
+
+- "SERIAL_DEVICE": "COM3"  # 串口名
+- "SSH_SERVER_IP_ADDRESS": "127.0.0.1"  # 修改为连接服务器地址
+- "SSH_SERVER_PORT": 2200  # 服务器连接端口
+- "SSH_SERVER_USERNAME": "bar"  # 连接服务器用户名
+- "SSH_SERVER_PASSWORD": "foo"  # 连接服务器密码
+
 # 使用方法
 ```
 cd NetSerial_Client
 python ./start.py
 ```
+
+使用`ctrl-m`可以打开菜单
 
 
 # TODO
