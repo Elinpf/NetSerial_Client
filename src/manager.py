@@ -120,27 +120,37 @@ class Manager():
         except SSHException:
             logger.error(
                 "can't connect netserial server, please contact the administrator.")
+            raise SSHException
 
         except Exception:
             logger.exception("something wrong with the netserial server.")
+            raise Exception
 
     def regist_room(self):
         """
         regist to server, get a room id 
         """
-        if not self.is_connected_server():
-            self.connect_server()
+        try:
+            if not self.is_connected_server():
+                self.connect_server()
 
-        conn = ConnectionRoom(self.get_ssh_channel())
+            conn = ConnectionRoom(self.get_ssh_channel())
 
-        self._room = Room(conn)
-        self._room.regist()
-        if self._control:
-            self._control.append(conn)
-            logger.debug('Manager: Room append in control list')
+            self._room = Room(conn)
+            self._room.regist()
+            if self._control:
+                self._control.append(conn)
+                logger.debug('Manager: Room append in control list')
+
+        except SSHException:
+            return
 
     def get_ssh_channel(self):
-        return self.ssh_client.channel
+        cl = self.ssh_client.channel
+        if not cl:
+            return False
+
+        return cl
 
     def get_room_id(self):
         return self._room.room_id()
@@ -149,8 +159,13 @@ class Manager():
         return bool(self.ssh_client)  # ! something wrong
 
     def close_room(self):
+        if not self._room:
+            logger.info('not in room')
+            return
+
         self.ssh_client.close()
         self._room.close()
+        logger.info("close the room")
 
     # =====================
     def git_pull(self):

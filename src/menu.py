@@ -100,9 +100,11 @@ class Menu():
                 self.send_line(c.decode())  # echo
                 _select = self.current_menu.select(c)
                 if isinstance(_select, Item):
-                    msg = _select.func()
-                    self.send_line(msg)
-                    break
+                    try:
+                        msg = _select.func()
+                        self.send_line(msg)
+                    finally:
+                        break
 
                 else:
                     self.current_menu = _select
