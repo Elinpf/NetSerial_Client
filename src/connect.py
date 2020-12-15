@@ -56,7 +56,8 @@ class ConnectionTelnet(Connection):
 
     def __init__(self, socket):
         self._socket = Socket(socket)
-        self._block = True  # use to block send to serial
+        self._block = Block()
+        self._block.set()
         logger.info('establish a new telnet session')
 
     def clean_text(self, text):
@@ -144,7 +145,7 @@ class ConnectionTelnet(Connection):
 
         length = self.send_line("You are now connected to console.")
 
-        self._block = False
+        self._block.unset()
         logger.info('telnet initialize completed')
 
     def send(self, data, force=False):
@@ -152,8 +153,9 @@ class ConnectionTelnet(Connection):
         when init status , block the send channel
         force to send to terminal if want
         """
-        if self._block:
+        if self._block.is_set():
             if not force:
+                self._block.save_data(data)
                 return 0
 
         return self._socket.send(data)
@@ -173,7 +175,9 @@ class ConnectionTelnet(Connection):
 
             # ctrl-n open menu
             if stream == b'\x0e':
+                self._block.set()
                 self.oepn_menu()
+                self.send(self._block.freed_data())
                 return
 
         except SocketClosed:
@@ -201,7 +205,7 @@ class ConnectionTelnet(Connection):
             if not gvar.manager.try_to_connect_serial_port():
                 return
 
-        if self._block:
+        if self._block.is_set():
             return
 
         self.control.notice(stream)
@@ -264,3 +268,28 @@ class ConnectionRoom(Connection):
         except OSError:
             logger.error("server connection was closed.")
             gvar.manager.close_room()
+
+
+class Block():
+    def __init__(self):
+        self._block = False
+        self._data = []
+
+    def set(self):
+        self._block = True
+
+    def unset(self):
+        self._block = False
+
+    def is_set(self):
+        return self._block
+
+    def save_data(self, data):
+        if self.is_set():
+            self._data.append(data)
+
+    def freed_data(self):
+        self.unset()
+        d = ''.join(self._data)
+        self._data.clear()
+        return d

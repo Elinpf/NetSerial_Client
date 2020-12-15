@@ -52,7 +52,9 @@ class Socket():
         return self._socket.fileno()
 
     def closed(self):
+        """ socket status """
         return self._socket._closed
 
     def close(self):
+        """ close socket """
         return self._socket.close()
